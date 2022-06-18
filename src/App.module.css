@@ -1,5 +1,6 @@
 .App {
   text-align: center;
+  text-decoration-style: dashed;
 }
 
 .logo {
@@ -19,7 +20,7 @@
   color: white;
 }
 
-.link {
+.link .asdf {
   color: #b318f0;
 }
 
@@ -30,4 +31,20 @@
   to {
     transform: rotate(360deg);
   }
+}
+
+@media print {
+  div {
+    color: red;
+  }
+}
+
+@media screen {
+  p {
+    text-align: center;
+  }
+}
+
+@page {
+  color: rgba(1, 23, 4, 0.2);
 }

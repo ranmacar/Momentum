@@ -1,0 +1,52 @@
+Asthp
+
+:fn ...args]            - function call, if a list is called, head gets applied to tail :[fn 1 2] ~= :fn [1 2]]
+=name value]            - assignment
+.name name]             - namespace lookup
+>[...body] [...args] ]   - fn def, default args are .1 .2 .3 ... .0 is a list of all arguments
+[...list]               - list
+{=name value]           - map
+ =name value]]      
+(...list]               - set
+'fasdf]                 - string
+"fad..fasdf]            - text
+#32525e25               - number
+@341251245143145        - unix time
+
+|value                  - atom / reactive primitive 
+/fn{=optional options]]- effect / runs everytime a dependency changes
+\fn                     - memo / changes everytime a dependency changes
+
+=add>:+ x y] [x y]]]
+=add>:+ .1 .2]]]
+=add>[+ .0]
+
+:.fasdf sd fas asdfasf] .fasdf sdf afsdf]
+
+
+actions:
+    move left / right
+    move up / down
+    append type
+    prepend type
+    wrap in type
+    unwrap
+    copy
+    paste
+    delete
+    
+Parser:
+Interpreter:
+IDE:
+
+
+Compiler to JS/Wasm:
+
+
+Transpiler from JS:
+
+
+Transpiler to/from Haskell:
+
+
+
