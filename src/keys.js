@@ -1,21 +1,7 @@
 import { JS_to_HTML } from './js-html'
 import overlay from './key-overlay'
-
 import { layout } from './key-layout'
-// import { persistFile } from '../persist-plugin'
 
-// const keyFile = `
-// const layout = \`${[0, 1, 2, 3, 4, 5].map(row => layout.filter((key) => key.row === row).map((key) => key.code).join(' ')).join('\n')}\`
-
-// export default ${JSON.stringify(layout.map(
-//     (o, index) => ({
-//         row: Math.floor(index / (78 / 6)), column: index,
-//         ...o
-//     })
-// ), 0, 4)}
-// `
-
-// persistFile(['src', 'key-layout.js'], keyFile)
 document.body.append(JS_to_HTML(...overlay(layout)))
 
 export default ({
@@ -56,7 +42,7 @@ export default ({
 
     const dispatcher = (_, event) => dispatch(event)
     const dispatch = (event) => event.target.dispatchEvent(new event.class(event.type, event))
-    const codeMatch = (released) => (held) => held.keyCode === released.keyCode
+    const codeMatch = (released) => (held) => held.code === released.code
 
     const down = (e) => {
         const event = held.find(codeMatch(e))
@@ -65,7 +51,9 @@ export default ({
             mappings[e.key]?.held()
         } else {
             held.push(e)
+            document.querySelector('#' + e.code).style.background = 'green'
         }
+
         e.preventDefault()
     }
 
@@ -73,15 +61,15 @@ export default ({
         const index = held.findIndex(codeMatch(e))
         const [event] = held.splice(index, 1)
 
+        document.querySelector('#' + e.code).style.background = ''
+
         const duration = e.timeStamp - event.timeStamp
 
         if (duration < tap) tapped.push(event)
 
-        console.log(held.map(e => e.key).concat(e.key).join('+'))
+        console.log(held.map(e => e.code).concat(e.code).join('+'))
 
         mappings[e.key]?.pressed()
-
-        console.log(e)
     }
 
     const reset = () => {
