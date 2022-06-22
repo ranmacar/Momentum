@@ -1,11 +1,15 @@
-import { defineConfig } from "vite";
-import solidPlugin from "vite-plugin-solid";
-import mix from 'vite-plugin-mix';
+import { defineConfig } from "vite"
+import solidPlugin from "vite-plugin-solid"
+import persistPlugin from "./persist-plugin"
 
 export default defineConfig({
   plugins: [
+    persistPlugin({
+      file: {
+        // base: '/home/ranmacar/ram'
+      }
+    }),
     solidPlugin(),
-    mix({ handler: './src/rest.js' })
   ],
   build: {
     target: "esnext",

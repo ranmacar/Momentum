@@ -52,4 +52,4 @@ const JS_to_CSS = (json) => {
 everytime a style gets applied to an element, it gets saved
 same values combine to classes with optional names
 
- */
+*/
