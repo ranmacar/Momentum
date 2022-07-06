@@ -17,7 +17,7 @@ export const HTML_to_JS = (el) => el.nodeType === Node.TEXT_NODE
 
 export const JS_to_HTML = (tag, ...data) => data.reduce((el, data) => {
   if (typeof data === 'string') { el.appendChild(text(data)) }
-  if (typeof data === 'number') { const span = node('span'); span.classList.add('number'); span.textContent = data; el.appendChild(span) }
+  else if (typeof data === 'number') { el.appendChild(text(data)) }
   else if (Array.isArray(data)) { el.appendChild(JS_to_HTML(...data)) }
   else if (typeof data === 'object') { Object.entries(data).forEach(([attr, value]) => el.setAttribute(attr, value)) }
   return el;

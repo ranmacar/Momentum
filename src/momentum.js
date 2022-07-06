@@ -1,9 +1,8 @@
-import $ from './trkl'
-import k from './keys'
-import ast from './js-ast'
+import $ from './reactive/trkl'
+import k from './keys/keys'
+import ast from './ast/js-ast'
 
 import { persistFile } from "../persist-plugin"
-// persistFile('test3333.js', '!!!!!!!')
 
 export default () => {
   const cursor = $({})
