@@ -6,24 +6,25 @@ const falsy = thing => !!thing
 
 export default (modes, mode, held, history) => {
     const layout = $(localStorage.getItem('keys__layout') || Object.values(layouts)[0])
-    const keys = $.computed(() => layout().split(/\s/).filter(x => !!x).map(key => key.replace(/^\d+\.?\d*|-/, '')))
 
-    const rows = layout().split('\n').filter(falsy)
-    const buttons = rows.map((r, row) => r.split(' ').map((k, column) => {
-        const [span, key] = k.match(/^(\d+\.?\d*)(.*)/)?.slice(1) || [1, k]
+    const rows = $.computed(() => layout().split('\n').filter(falsy)
+        .map((row) => row.split(' ').map((keyString) => {
+            const [span, key] = keyString.match(/^-?(\d+\.?\d*)?([^-:]+)/)?.slice(1) || [1, k, k]
 
-        return { key: key === 'none' ? '' : key, row, column, span }
-    }))
+            return {
+                key: key === 'none' ? '' : key,
+                span: span || 1,
+                merge: keyString.startsWith('-')
+            }
+        }).reduce(
+            (row, key) => key.merge
+                ? row.slice(0, -1).concat([row.slice(-1).flat().concat(key)])
+                : row.concat([[key]])
+            , []
+        ))
+    )
 
-    const merged = buttons.flat().filter(key => key.key.startsWith('-'))
-
-    merged.forEach(key => {
-        const prev = buttons[key.row][key.column - 1]
-        buttons[key.row][key.column - 1] = [prev, { ...key, key: key.key === '-none' ? '' : key.key.slice(1) }]
-        buttons[key.row][key.column] = false
-    })
-
-    const filtered = buttons.map(row => row.filter(falsy))
+    const keys = $.computed(() => rows().flat(2).map(button => button.key).filter(falsy))
 
     const buttonStyle = key => `
         margin: 3px;
@@ -33,7 +34,7 @@ export default (modes, mode, held, history) => {
         flex: 1 1;
         justify-content: center;
         align-items: center;
-    ${key.key ? 'border: 2px solid gray' : ''};
+        ${key.key ? 'border: 2px solid gray' : ''};
     `
 
     document.body.append(h(...[
@@ -43,49 +44,51 @@ export default (modes, mode, held, history) => {
                 display: flex;
                 width: 100%;
                 flex-direction: column;
-                `
+            `
         },
         ...modes.map((mode) => {
 
         }),
-        ...filtered.map((row) => [
+        ...rows().map((row) => [
             'div', {
                 class: 'row',
                 style: `
-                display: flex;
+                    display: flex;
                 `
             }, ...row.map(key => Array.isArray(key)
                 ? [
                     'div', {
                         style: `
-                    display: flex;
-                    height: 4rem;
-                        min-width: 0;
-                        flex: ${key[0].span} ${key[0].span};
-                        flex-direction: column;`
+                            display: flex;
+                            height: 4rem;
+                            min-width: 0;
+                            flex: ${key[0].span} ${key[0].span};
+                            flex-direction: column;
+                        `
                     }, ...key.map(key => [
                         'div',
                         {
                             style: `
-                            flex: 1 1;
-                            min-width: 0;
-                            display: flex;
+                                flex: 1 1;
+                                min-width: 0;
+                                min-height: 0;
+                                display: flex;
                             `
                         },
                         ['div', {
                             id: key.key,
                             style: buttonStyle(key)
-                        }, key.key]
+                        }, key.display || key.key]
                     ])
                 ]
                 : [
                     'div',
                     {
                         style: `
-                        height: 4rem;
-                        display: flex;
-                        min-width: 0;
-                        flex: ${key.span} ${key.span};
+                            height: 4rem;
+                            display: flex;
+                            min-width: 0;
+                            flex: ${key.span} ${key.span};
                         `
                     },
                     ['div', {
@@ -98,8 +101,13 @@ export default (modes, mode, held, history) => {
 
     const updateKeys = $.computed(() => keys().map(key => {
         const current = mode()
-        const handler = current[key] || modes[current.fallback]?.[key]
-        const display = handler.display
+        const fallback = modes[current.fallback]
+        const handler = current[key] || fallback?.[key]
+
+        const display = handler?.display
+            || current?.default?.(key, current)?.display
+            || fallback?.default?.(key, current)?.display
+
         document.querySelector('#' + key).innerHTML = display ? h(...display).innerHTML : ''
     }))
 
@@ -112,13 +120,15 @@ export default (modes, mode, held, history) => {
     })
 
     if (history) {
-        document.body.append(h(...['pre', {
+        document.body.append(h(...['div', {
             id: 'history'
         }]))
 
-        $.computed(() => document.querySelector('#history').innerHTML = history().map(
-            (e, i) => [i + 1, e.TYPE, e.code, e.duration || ''
-            ].join(' '),
-        ).join('\n'))
+        $.computed(() => document.querySelector('#history').innerHTML = h(...[
+            'div',
+            ...history().map(e => [
+                'div',
+                [e.TYPE, e.code, e.duration || ''].join(' ')
+            ])]).innerHTML)
     }
 }

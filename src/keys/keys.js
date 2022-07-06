@@ -18,12 +18,15 @@ export default ({
 
     const eventProxy = (mappings) => new Proxy(mappings, {
         get(target, code) {
-            const currentMode = mode()
+            const current = mode()
             if (code === 'fallback') return target.fallback
             if (code === 'default') return target.default
             if (target[code]) return target[code]
-            if (target.fallback && modes?.[fallback]?.[code]) return modes[fallback][code]
-            return target.default?.(code, currentMode)
+
+            const fallback = modes[target.fallback]
+
+            if (fallback && fallback?.[code]) return fallback[code]
+            return target.default?.(code, current) || fallback?.default?.(code, current)
         }
     })
 
@@ -40,10 +43,15 @@ export default ({
             },
         }, {
             name: 'default',
-            fallback: 0,
+            Space: {
+                display: ['div', ':)']
+            },
+            Escape: {
 
+            }
         }
     ]).map(eventProxy)
+
     const mode = $(modes[0])
 
     const codeMatch = (released) => (held) => held.code === released.code
@@ -79,7 +87,7 @@ export default ({
     const undeffer = () => {
         const event = last()
 
-        if (!event) return
+        if (!event || !event.deferred) return
 
         clearTimeout(event.deferred)
         event.tap()
@@ -88,6 +96,8 @@ export default ({
             event.TYPE = 'tap'
             events([...events()])
         }
+
+        last(false)
     }
 
     const up = (e) => {
@@ -99,47 +109,45 @@ export default ({
 
         held(temp)
 
-        const mappings = mode()?.[event.code]
+        const mappings = mode()?.[event.code] || {}
         const duration = e.timeStamp - event.timeStamp
 
-        if (mappings) {
-            if (duration < tap) {
-                const before = last()
-                if (mappings.double) {
-                    if (before) {
-                        if (before.code === event.code && event.timeStamp - before.timeStamp < tap) { // and its the same
-                            last(false)
-                            mappings?.double?.(before)
+        if (duration < tap) {
+            const before = last()
+            if (mappings.double) {
+                if (before) {
+                    if (before.code === event.code && event.timeStamp - before.timeStamp < tap) { // and its the same
+                        mappings?.double?.(before)
+                        last(false)
 
-                            if (history) {
-                                before.TYPE = 'double'
-                                events([...events().slice(1)])
-                            }
-                        } else {
-                            undeffer()
-                            deffer(event, mappings)
+                        if (history) {
+                            before.TYPE = 'double'
+                            events([...events().slice(1)])
                         }
                     } else {
+                        undeffer()
                         deffer(event, mappings)
                     }
                 } else {
-                    undeffer()
-
-                    mappings?.tap?.(event)
-
-                    if (history) {
-                        event.TYPE = 'tap'
-                        events([event, ...events()])
-                    }
+                    deffer(event, mappings)
                 }
             } else {
-                mappings?.held?.(event, duration)
+                undeffer()
+
+                mappings?.tap?.(event)
 
                 if (history) {
-                    e.TYPE = 'released'
-                    e.duration = duration
-                    events([e, ...events()])
+                    event.TYPE = 'tap'
+                    events([...events()])
                 }
+            }
+        } else {
+            mappings?.held?.(event, duration)
+
+            if (history) {
+                e.TYPE = 'released'
+                e.duration = duration
+                events([e, ...events()])
             }
         }
     }
