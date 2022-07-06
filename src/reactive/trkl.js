@@ -9,39 +9,38 @@ export default function trkl(value) {
       : read();
   };
 
+  self.value = value;
   self.subs = subscribers; // expose for runtime goodness :)
 
-  // declaring as a private function means the minifier can scrub its name on internal references
   var subscribe = (subscriber, immediate) => {
     if (!~subscribers.indexOf(subscriber)) {
       subscribers.push(subscriber);
     }
     if (immediate) {
-      subscriber(value);
+      subscriber(self.value);
     }
   }
 
-  // Using string keys tells Uglify that we intend to export these symbols
-  self['sub'] = subscribe;
+  self.sub = subscribe;
 
-  self['unsub'] = subscriber => {
+  self.unsub = subscriber => {
     remove(subscribers, subscriber);
   };
 
   function write(newValue, comp) {
-    if (newValue === value && (
+    if (newValue === self.value && (
       value === null ||
-      typeof value !== 'object' ||
-      comp && comp(newValue, value))) {
+      typeof self.value !== 'object' ||
+      comp && comp(newValue, self.value))) {
       return;
     }
 
-    var oldValue = value;
-    value = newValue;
+    var oldValue = self.value;
+    self.value = newValue;
 
     for (let i = subscribers.length - 1; i > -1; i--) {
       // Errors will just terminate the effects
-      subscribers[i](value, oldValue);
+      subscribers[i](self.value, oldValue);
     }
   }
 
@@ -50,13 +49,13 @@ export default function trkl(value) {
     if (runningComputation) {
       subscribe(runningComputation[0]);
     }
-    return value;
+    return self.value;
   }
 
   return self;
 }
 
-trkl['computed'] = fn => {
+trkl.computed = fn => {
   var self = trkl();
   var computationToken = [runComputed]
 
@@ -68,7 +67,7 @@ trkl['computed'] = fn => {
     computedTracker.push(computationToken);
     var errors, result;
     try {
-      result = fn();
+      result = fn(self.value);
     } catch (e) {
       errors = e;
     }
@@ -80,7 +79,7 @@ trkl['computed'] = fn => {
   }
 };
 
-trkl['from'] = executor => {
+trkl.from = executor => {
   var self = trkl();
   executor(self);
   return self;
