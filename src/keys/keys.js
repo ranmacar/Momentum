@@ -1,9 +1,5 @@
-import { JS_to_HTML } from '../ast/js-html'
-import overlay from './key-overlay'
-import { layout } from './key-layout'
 import $ from '../reactive/trkl';
-
-export const keys = layout.split(/\s/).filter(x => !!x).map(key => key.replace(/^\d+\.?\d*|-/, ''))
+import overlay from './key-overlay'
 
 /* features:
 bind functions to key tap, double tap, hold
@@ -16,8 +12,6 @@ export default ({
     display = true,
     history = true,
 } = {}) => {
-
-
     const held = $([])     // all keys being held 
     const last = $()       // last key that has been tapped
     const events = $([])   // optional history of key events
@@ -50,39 +44,7 @@ export default ({
 
         }
     ]).map(eventProxy)
-
     const mode = $(modes[0])
-
-    if (display) {
-        document.body.append(JS_to_HTML(...overlay(layout)))
-
-        const displayKeys = $.computed(() => keys.map(key => {
-            const current = mode()
-            const handler = current[key] || modes[current.fallback]?.[key]
-            const display = handler.display
-            document.querySelector('#' + key).innerHTML = display ? JS_to_HTML(...display).innerHTML : ''
-        }))
-
-        const highlightHeld = $.computed((old = []) => {
-            old.map(code => document.querySelector('#' + code).style.background = '')
-            return held().map(e => {
-                document.querySelector('#' + e.code).style.background = 'green'
-                return e.code
-            })
-        })
-
-        if (history) {
-            document.body.append(JS_to_HTML(...['pre', {
-                id: 'history'
-            }]))
-
-            const history = $.computed(() => document.querySelector('#history').innerHTML = events().map(
-                (e, i) => [i + 1, e.TYPE, e.code, e.duration || ''
-                ].join(' '),
-            ).join('\n'))
-        }
-    }
-
 
     const codeMatch = (released) => (held) => held.code === released.code
 
@@ -100,7 +62,7 @@ export default ({
 
             if (history) {
                 e.TYPE = 'held'
-                events([...events(), e])
+                events([e, ...events()])
             }
         }
 
@@ -151,7 +113,7 @@ export default ({
 
                             if (history) {
                                 before.TYPE = 'double'
-                                events([...events().slice(0, -1)])
+                                events([...events().slice(1)])
                             }
                         } else {
                             undeffer()
@@ -167,7 +129,7 @@ export default ({
 
                     if (history) {
                         event.TYPE = 'tap'
-                        events([...events(), event])
+                        events([event, ...events()])
                     }
                 }
             } else {
@@ -176,7 +138,7 @@ export default ({
                 if (history) {
                     e.TYPE = 'released'
                     e.duration = duration
-                    events([...events(), e])
+                    events([e, ...events()])
                 }
             }
         }
@@ -186,6 +148,8 @@ export default ({
         held([])
         last([false])
     }
+
+    if (display) overlay(modes, mode, held, history && events)
 
     document.onkeydown = down
     document.onkeyup = up
