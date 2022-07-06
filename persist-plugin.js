@@ -9,13 +9,10 @@ export default ({
         file && server.ws.on('persist:file', ({ path, data }) => {
             try {
                 console.log(path)
-                if (!Array.isArray(path)) path = [path
-                ]
+                if (!Array.isArray(path)) path = [path]
                 const base = file.base || [__dirname]
                 const filename = path.pop()
                 const filepath = fp.resolve(...base, ...path)
-
-                console.log(filepath, filename)
 
                 if (!fs.existsSync(filepath)) fs.mkdirSync(filepath, {
                     recursive: true
