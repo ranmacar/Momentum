@@ -26,8 +26,6 @@ export default (modes, mode, held, history) => {
 
     const keys = $.computed(() => rows().flat(2).map(button => button.key).filter(falsy))
 
-    console.log(keys())
-
     const buttonStyle = key => `
         font-weight: 700;
         font-size: 1.2rem;
