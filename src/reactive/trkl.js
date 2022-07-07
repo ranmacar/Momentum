@@ -59,6 +59,7 @@ trkl.computed = fn => {
   var self = trkl();
   var computationToken = [runComputed]
 
+  runComputed.fn = fn
   runComputed();
   return self;
 

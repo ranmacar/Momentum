@@ -26,7 +26,11 @@ export default (modes, mode, held, history) => {
 
     const keys = $.computed(() => rows().flat(2).map(button => button.key).filter(falsy))
 
+    console.log(keys())
+
     const buttonStyle = key => `
+        font-weight: 700;
+        font-size: 1.2rem;
         margin: 3px;
         min-width: 0;
         text-align: center;
@@ -34,6 +38,8 @@ export default (modes, mode, held, history) => {
         flex: 1 1;
         justify-content: center;
         align-items: center;
+        border-radius: 5px;
+        box-shadow: 0 0 5px 3px gray;
         ${key.key ? 'border: 2px solid gray' : ''};
     `
 
@@ -108,7 +114,11 @@ export default (modes, mode, held, history) => {
             || current?.default?.(key, current)?.display
             || fallback?.default?.(key, current)?.display
 
-        document.querySelector('#' + key).innerHTML = display ? h(...display).innerHTML : ''
+        document.querySelector('#' + key).innerHTML = display
+            ? Array.isArray(display)
+                ? h(...display).innerHTML
+                : display
+            : ''
     }))
 
     const highlightHeld = $.computed((old = []) => {
