@@ -4,12 +4,15 @@ import layouts from './key-layouts'
 
 const falsy = thing => !!thing
 
+const jss = (selector, style) => Array.from(document.querySelectorAll(selector))
+    .map(element => Object.assign(element.style, style))
+
 export default (modes, mode, held, history) => {
-    const layout = $(localStorage.getItem('keys__layout') || Object.values(layouts)[0])
+    const layout = $(localStorage.getItem('keys__layout') || layouts.yoga530)
 
     const rows = $.computed(() => layout().split('\n').filter(falsy)
-        .map((row) => row.split(' ').map((keyString) => {
-            const [span, key] = keyString.match(/^-?(\d+\.?\d*)?([^-:]+)/)?.slice(1) || [1, k, k]
+        .map((row) => row.trim().split(' ').map((keyString) => {
+            const [span, key] = keyString.match(/^-?(\d+\.?\d*)?([^-:]+)/)?.slice(1) || [1, keyString]
 
             return {
                 key: key === 'none' ? '' : key,
@@ -37,71 +40,94 @@ export default (modes, mode, held, history) => {
         justify-content: center;
         align-items: center;
         border-radius: 5px;
-        box-shadow: 0 0 5px 3px gray;
-        ${key.key ? 'border: 2px solid gray' : ''};
+        transition: all 0.3s;
+        ${key.key ? `
+            background: #eeeeee;
+            box-shadow: 2px 2px 5px 3px gray;
+            border: 2px solid gray
+        ` : ''};
     `
 
-    document.body.append(h(...[
-        'div', {
-            class: 'keyboard',
+    document.body.append(h([
+        'div.keyboard', {
             style: `
                 display: flex;
                 width: 100%;
                 flex-direction: column;
             `
         },
-        ...modes.map((mode) => {
-
-        }),
-        ...rows().map((row) => [
-            'div', {
-                class: 'row',
+        ['div.modes', {
+            style: `
+                display: flex;
+                flex: 0 0 2rem;
+                width: 100%;
+            `
+        },
+            ...modes.map((m) => ['div#_' + m.name, {
                 style: `
-                    display: flex;
+                    background: #eeeeee;
+                    min-width: 6rem;
+                    flex: 1;
+                    text-align: center;
+                    border: 1px solid gray;
+                    margin: 4px;
                 `
-            }, ...row.map(key => Array.isArray(key)
-                ? [
-                    'div', {
-                        style: `
+            }, m.name])],
+        ['div', {
+            style: `
+                aspect-ratio: 2.7;
+                display: flex;
+                flex-direction: column;
+            `
+        },
+            ...rows().map((row) => [
+                'div.row', {
+                    style: `
+                        display: flex;
+                        flex: 1 0;
+                        min-height: 0;
+                    `
+                }, ...row.map(key => Array.isArray(key)
+                    ? [
+                        'div', {
+                            style: `
                             display: flex;
-                            height: 4rem;
                             min-width: 0;
                             flex: ${key[0].span} ${key[0].span};
                             flex-direction: column;
                         `
-                    }, ...key.map(key => [
-                        'div',
-                        {
-                            style: `
+                        }, ...key.map(key => [
+                            'div',
+                            {
+                                style: `
                                 flex: 1 1;
                                 min-width: 0;
                                 min-height: 0;
                                 display: flex;
                             `
-                        },
-                        ['div', {
-                            id: key.key,
-                            style: buttonStyle(key)
-                        }, key.display || key.key]
-                    ])
-                ]
-                : [
-                    'div',
-                    {
-                        style: `
-                            height: 4rem;
+                            },
+                            ['div', {
+                                id: key.key,
+                                style: buttonStyle(key)
+                            }, key.display || key.key]
+                        ])
+                    ]
+                    : [
+                        'div',
+                        {
+                            style: `
                             display: flex;
                             min-width: 0;
                             flex: ${key.span} ${key.span};
                         `
-                    },
-                    ['div', {
-                        id: key.key,
-                        style: buttonStyle(key)
-                    }, key.key]
-                ])
-        ])
-    ]))
+                        },
+                        ['div', {
+                            id: key.key,
+                            style: buttonStyle(key)
+                        }, key.key]
+                    ])
+            ])
+        ]]))
 
     const updateKeys = $.computed(() => keys().map(key => {
         const current = mode()
@@ -114,29 +140,48 @@ export default (modes, mode, held, history) => {
 
         document.querySelector('#' + key).innerHTML = display
             ? Array.isArray(display)
-                ? h(...display).innerHTML
+                ? h(display).innerHTML
                 : display
             : ''
     }))
 
+
     const highlightHeld = $.computed((old = []) => {
-        old.map(code => document.querySelector('#' + code).style.background = '')
+        old.map(code => jss('#' + code, {
+            boxShadow: '2px 2px 5px 3px gray',
+            background: '#eeeeee',
+            transform: 'scale(1)'
+        }))
+
         return held().map(e => {
-            document.querySelector('#' + e.code).style.background = 'green'
+            jss('#' + e.code, {
+                boxShadow: '1px 1px 3px 1px gray',
+                background: '#ddffdd',
+                transform: 'scale(0.9)'
+            })
             return e.code
         })
     })
 
-    if (history) {
-        document.body.append(h(...['div', {
-            id: 'history'
-        }]))
+    const showMode = $.computed((old) => {
+        jss('#_' + old, {
+            borderColor: 'gray',
+            background: '#eeeeee'
+        })
 
-        $.computed(() => document.querySelector('#history').innerHTML = h(...[
-            'div',
-            ...history().map(e => [
-                'div',
-                [e.TYPE, e.code, e.duration || ''].join(' ')
-            ])]).innerHTML)
+        jss('#_' + mode().name, {
+            borderColor: 'black',
+            background: '#ffdddd'
+        })
+
+        return mode().name
+    })
+
+    if (history) {
+        document.body.append(h(['div#history']))
+        $.computed(() => {
+            const last = history()[0]
+            if (last) document.querySelector('#history').prepend(h(['div', [last.TYPE, last.code, last.duration || ''].join(' ')]))
+        })
     }
 }

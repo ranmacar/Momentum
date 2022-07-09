@@ -2,15 +2,10 @@ import $ from '../reactive/trkl';
 import overlay from './key-overlay'
 import { standard, shifted } from './key-bindings';
 
-/* features:
-bind functions to key tap, double tap, hold
-taps and holds can switch modes 
-*/
-
 export default ({
     tap = 200,
     sticky = 2000,
-    modes = [],
+    bindings = [],
     display = true,
     history = true,
 } = {}) => {
@@ -30,7 +25,7 @@ export default ({
         }
     })
 
-    modes = (JSON.parse(localStorage.getItem('keys__modes')) || [
+    const modes = (JSON.parse(localStorage.getItem('keys__modes')) || [
         {
             name: 'debug',
             default(code, mode) {
@@ -43,7 +38,8 @@ export default ({
             },
         },
         standard,
-        shifted
+        shifted,
+        ...bindings
     ]).map(eventProxy)
 
     const codeMatch = (code) => (held) => held.code === code

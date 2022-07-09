@@ -20,7 +20,7 @@ export const standard = {
             tap: () => console.log(code)
         }
 
-        const [modifier, position] = code.match(/(Alt|Shift|Control|Meta|Command)(Left|Right)/)?.slice?.(1) || []
+        const [modifier, position] = code.match(/(Alt|Shift|Control|Meta|Command|Option)(Left|Right)/)?.slice?.(1) || []
         if (modifier) return {
             display: modifier,
             tap: () => console.log(modifier, position)
@@ -30,6 +30,9 @@ export const standard = {
             Escape: {
                 display: 'Esc',
                 tap: () => console.log('Escape')
+            },
+            Fn: {
+                display: 'Fn',
             },
             Prnt: {
                 display: 'Prnt',
