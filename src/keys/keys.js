@@ -10,7 +10,6 @@ export default ({
     history = true,
 } = {}) => {
     const held = $([])     // all keys being held 
-    const last = $()       // last key that has been tapped
     const events = $([])   // optional history of key events
 
     const eventProxy = (bindings) => new Proxy(bindings, {
@@ -97,24 +96,24 @@ export default ({
         e.preventDefault()
     }
 
+    let last = false
     const deffer = (event) => {
         event.deferred = setTimeout(undeffer, tap)
-        last(event)
+        last = event
     }
 
     const undeffer = () => {
-        const event = last()
-        if (!event || !event.deferred) return
+        if (!last || !last.deferred) return
 
-        clearTimeout(event.deferred)
-        event.mappings.tap(event)
+        clearTimeout(last.deferred)
+        last.mappings.tap(last)
 
         if (history) {
-            event.TYPE = 'tap'
+            last.TYPE = 'tap'
             events([...events()])
         }
 
-        last(false)
+        last = false
     }
 
     const up = (e) => {
@@ -130,21 +129,20 @@ export default ({
 
         held(temp)
 
-        // const mappings = mode()?.[event.code] || {}
         const duration = e.timeStamp - event.timeStamp
 
         if (duration < tap) {
-            const before = last()
             if (event.mappings.double) {
-                if (before) {
-                    if (before.code === event.code && event.timeStamp - before.timeStamp < tap) { // and its the same
-                        before.mappings?.double?.(before)
-                        last(false)
+                if (last) {
+                    if (last.code === event.code && event.timeStamp - last.timeStamp < tap) { // and its the same
+                        last.mappings?.double?.(last)
 
                         if (history) {
-                            before.TYPE = 'double'
+                            last.TYPE = 'double'
                             events([...events().slice(1)])
                         }
+
+                        last = false
                     } else {
                         undeffer()
                         deffer(event)
@@ -175,7 +173,7 @@ export default ({
 
     const reset = () => {
         held([])
-        last([false])
+        last = false
     }
 
     if (display) overlay(modes, mode, held, history && events)

@@ -1,14 +1,16 @@
-var computedTracker = [];
+var computedTracker = []
 
+let index = 0
 export default function trkl(value) {
-  var subscribers = [];
+  var subscribers = []
 
   var self = function (...args) {
     return args.length
       ? write(args[0])
-      : read();
+      : read()
   };
 
+  self.index = index++;
   self.value = value;
   self.subs = subscribers; // expose for runtime goodness :)
 

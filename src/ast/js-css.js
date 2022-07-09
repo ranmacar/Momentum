@@ -1,3 +1,6 @@
+export const jss = (el, ...styles) => (el instanceof HTMLElement ? [el] : Array.from(document.querySelectorAll(el)))
+  .map(element => Object.assign(element.style, ...styles)).false
+
 const pathMerge = (o, path, value) => {
   let target = o;
   let prop;
@@ -9,7 +12,6 @@ const pathMerge = (o, path, value) => {
       target[prop] = value;
     } else {
       target = target[prop]
-
     }
   }
   return o;
@@ -25,7 +27,7 @@ const parseCSSValues = (value) => {
   return parts.length === 1 ? parts[0] : parts
 }
 
-const CSS_to_JS = (sheet) => Array.from(sheet.cssRules)
+export const CSS_to_JS = (sheet) => Array.from(sheet.cssRules)
   .filter(rule => rule.type === 1)
   .reduce((rules, rule) => ({
     ...rules,
@@ -43,13 +45,6 @@ const CSS_to_JS = (sheet) => Array.from(sheet.cssRules)
     , {})
 
 
-const JS_to_CSS = (json) => {
-
+const JS_to_CSS = (js) => {
+  // eventually..
 }
-
-/*  auto compressing css
-
-everytime a style gets applied to an element, it gets saved
-same values combine to classes with optional names
-
-*/
