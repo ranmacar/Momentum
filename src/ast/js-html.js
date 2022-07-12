@@ -3,7 +3,6 @@ const not_empty = (o) => o && (!!o.length || !!Object.keys(o).length);
 
 const html = document.createElement.bind(document);
 const text = document.createTextNode.bind(document);
-// TODO...
 const svg = document.createElementNS.bind(document, 'http://www.w3.org/2000/svg')
 const math = document.createElementNS.bind(document, 'http://www.w3.org/1998/Math/MathML')
 
@@ -64,10 +63,14 @@ export const JS_to_HTML = (data, el) => {
         if (not_empty(attrs)) data.unshift(attrs)
 
         return data.reduce((el, data) => {
-            const child = JS_to_HTML(data, el)
-            if (child && el !== child) el.appendChild(child)
-
-            return el
+            try {
+                const child = JS_to_HTML(data, el)
+                if (child && el !== child) el.appendChild(child)
+            } catch (e) {
+                console.log(e, el, child)
+            } finally {
+                return el
+            }
         }, namespaces[namespace](tag))
     }
 
@@ -75,10 +78,16 @@ export const JS_to_HTML = (data, el) => {
 
     if (typeof data === 'object') return Object.entries(data).reduce(
         (el, [attr, value]) => {
-            if (value instanceof Function) {
-                value = value(el)
+            try {
+                if (value instanceof Function) {
+                    value = value(el)
+                }
+                el.setAttribute(attr, value)
+            } catch (e) {
+                console.log(e, el, attr, value)
+            } finally {
+                return el
+
             }
-            el.setAttribute(attr, value)
-            return el
         }, el || node('div'))
 }

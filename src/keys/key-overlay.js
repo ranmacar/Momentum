@@ -1,9 +1,13 @@
 import $ from '../reactive/trkl'
 import { JS_to_HTML as h } from '../ast/js-html'
+import events from '../ast/js-events'
 import { jss } from '../ast/js-css'
+
 import layouts from './key-layouts'
 
 const falsy = thing => !!thing
+
+const { on } = events()
 
 export default (modes, mode, held, history) => {
     const layout = $(localStorage.getItem('keys__layout') || layouts.yoga530)
@@ -123,12 +127,13 @@ export default (modes, mode, held, history) => {
             ])
         ],
         history && [
-            'div#history', el => {
-                $.computed(() => {
-                    const last = history()[0]
-                    if (last) el.prepend(h(['div', [last.TYPE, last.code, last.duration || ''].join(' ')]))
-                })
-            }]
+            'div#history',
+            on.click(console.log, 'logging!'),
+            el => $.computed(() => {
+                el.replaceChildren(...history().map(
+                    event => h(['div', [event.TYPE, event.code, event.duration || ''].join(' ')])))
+            })
+        ]
     ]))
 
     const updateKeys = $.computed(() => keys().map(key => {
