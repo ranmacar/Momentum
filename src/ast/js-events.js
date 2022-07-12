@@ -38,12 +38,16 @@ export default (eventPrefix = "on:", proxy = true, error = console.error) => {
         return element
     }
 
-    const addArgs = (fn, args, svg) =>
-        (e) => fn(svg ? Object.assign(e, {
+    const addArgs = (fn, args, svg) => {
+        const handler = (e) => fn(svg ? Object.assign(e, {
             svgCoords: svgCoords(svg, e.clientX, e.clientY, e.caller)
         })
             : e,
             ...args)
+
+        handler.__name = fn.name
+        return handler
+    }
 
     function on(event, fn, ...args) {
         if (event === 'focus') event = 'focusin';
@@ -56,7 +60,7 @@ export default (eventPrefix = "on:", proxy = true, error = console.error) => {
         return element => {
             element[name] = [...(element[name] || []), addArgs(fn, args, svgParent(element))]
             return {
-                [name]: element[name].map(fn => fn.name).join(' | ')
+                [name]: element[name].map(fn => fn.__name).join(' | ')
             }
         }
     }

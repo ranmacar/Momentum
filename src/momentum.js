@@ -1,11 +1,11 @@
-import $ from './reactive/trkl'
 import k from './keys/keys'
-import ast from './ast/js-ast'
-
-import { persistFile } from "../persist-plugin"
+import { standard, shifted } from './keys/key-bindings'
 
 export default () => {
-  const cursor = $({})
-
-  k()
+  document.body.append(k({
+    bindings: [
+      standard, shifted
+    ],
+    stack: [1, 0]
+  }))
 }

@@ -1,11 +1,11 @@
 import $ from '../reactive/trkl';
 import overlay from './key-overlay'
-import { standard, shifted } from './key-bindings';
 
 export default ({
     tap = 200,
     sticky = 2000,
     bindings = [],
+    stack = [0],
     display = true,
     history = true,
 } = {}) => {
@@ -36,14 +36,12 @@ export default ({
                 }
             },
         },
-        standard,
-        shifted,
         ...bindings
     ]).map(eventProxy)
 
     const codeMatch = (code) => (held) => held.code === code
 
-    const modeStack = $([1, 0])
+    const modeStack = $(stack)
 
     const setMode = mode => modeStack([modes[mode], ...modeStack()])
 
@@ -176,9 +174,9 @@ export default ({
         last = false
     }
 
-    if (display) overlay(modes, mode, held, history && events)
-
     document.onkeydown = down
     document.onkeyup = up
     window.onblur = reset
+
+    if (display) return overlay(modes, mode, held, history && events)
 }

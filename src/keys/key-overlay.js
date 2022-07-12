@@ -9,6 +9,10 @@ const falsy = thing => !!thing
 
 const { on } = events()
 
+const effect = (fn) => (el) => {
+    $.computed((old) => fn(el, old))
+}
+
 export default (modes, mode, held, history) => {
     const layout = $(localStorage.getItem('keys__layout') || layouts.yoga530)
 
@@ -49,32 +53,50 @@ export default (modes, mode, held, history) => {
         border: '2px solid gray'
     } : {})
 
-    document.body.append(h([
+    const Modes = [
+        'div.modes',
+        el => jss(el, {
+            display: 'flex',
+            flex: '0 0 2rem',
+            width: '100%'
+        }),
+        ...modes.map((m) => [
+            'div#_' + m.name,
+            el => jss(el, {
+                background: '#eeeeee',
+                minWidth: '6rem',
+                flex: 1,
+                textAlign: 'center',
+                border: '1px solid gray',
+                margin: '4px'
+            }),
+            m.name
+        ]),
+
+        effect((el, old) => {
+            jss(el.querySelector('#_' + old), {
+                borderColor: 'gray',
+                background: '#eeeeee'
+            })
+
+            jss(el.querySelector('#_' + mode().name), {
+                borderColor: 'black',
+                background: '#ffdddd'
+            })
+
+            return mode().name
+        })
+
+    ]
+
+    return h([
         'div.keyboard',
         el => jss(el, {
             display: 'flex',
             width: '100%',
             flexDirection: 'column'
         }),
-        [
-            'div.modes',
-            el => jss(el, {
-                display: 'flex',
-                flex: '0 0 2rem',
-                width: '100%'
-            }),
-            ...modes.map((m) => [
-                'div#_' + m.name,
-                el => jss(el, {
-                    background: '#eeeeee',
-                    minWidth: '6rem',
-                    flex: 1,
-                    textAlign: 'center',
-                    border: '1px solid gray',
-                    margin: '4px'
-                }),
-                m.name
-            ])],
+        Modes,
         [
             'div.rows',
             el => jss(el, {
@@ -126,60 +148,47 @@ export default (modes, mode, held, history) => {
                     ])
             ])
         ],
+
+        effect(el => keys().map(key => {
+            const current = mode()
+            const fallback = modes[current.fallback]
+            const handler = current[key] || fallback?.[key]
+
+            const display = handler?.display
+                || current?.default?.(key, current)?.display
+                || fallback?.default?.(key, current)?.display
+
+            el.querySelector('#' + key).innerHTML = display
+                ? Array.isArray(display)
+                    ? h(display).innerHTML
+                    : display
+                : ''
+        })),
+
+        effect((el, old = []) => {
+            old.map(code => jss(el.querySelector('#' + code), {
+                boxShadow: '2px 2px 5px 3px gray',
+                background: '#eeeeee',
+                transform: 'scale(1)'
+            }))
+
+            return held().map(e => {
+                jss(el.querySelector('#' + e.code), {
+                    boxShadow: '1px 1px 3px 1px gray',
+                    background: '#ddffdd',
+                    transform: 'scale(0.9)'
+                })
+                return e.code
+            })
+        }),
+
         history && [
             'div#history',
             on.click(console.log, 'logging!'),
-            el => $.computed(() => {
+            effect(el => {
                 el.replaceChildren(...history().map(
                     event => h(['div', [event.TYPE, event.code, event.duration || ''].join(' ')])))
             })
         ]
-    ]))
-
-    const updateKeys = $.computed(() => keys().map(key => {
-        const current = mode()
-        const fallback = modes[current.fallback]
-        const handler = current[key] || fallback?.[key]
-
-        const display = handler?.display
-            || current?.default?.(key, current)?.display
-            || fallback?.default?.(key, current)?.display
-
-        document.querySelector('#' + key).innerHTML = display
-            ? Array.isArray(display)
-                ? h(display).innerHTML
-                : display
-            : ''
-    }))
-
-    const highlightHeld = $.computed((old = []) => {
-        old.map(code => jss('#' + code, {
-            boxShadow: '2px 2px 5px 3px gray',
-            background: '#eeeeee',
-            transform: 'scale(1)'
-        }))
-
-        return held().map(e => {
-            jss('#' + e.code, {
-                boxShadow: '1px 1px 3px 1px gray',
-                background: '#ddffdd',
-                transform: 'scale(0.9)'
-            })
-            return e.code
-        })
-    })
-
-    const showMode = $.computed((old) => {
-        jss('#_' + old, {
-            borderColor: 'gray',
-            background: '#eeeeee'
-        })
-
-        jss('#_' + mode().name, {
-            borderColor: 'black',
-            background: '#ffdddd'
-        })
-
-        return mode().name
-    })
+    ])
 }

@@ -54,6 +54,8 @@ export const parseTagShorthands = (s) => {
 }
 
 export const JS_to_HTML = (data, el) => {
+    if (!not_empty(data)) return
+
     if (typeof data === 'string') return text(data)
     if (typeof data === 'number') return text(data)
 
@@ -74,7 +76,11 @@ export const JS_to_HTML = (data, el) => {
         }, namespaces[namespace](tag))
     }
 
-    if (data instanceof Function) return data(el)
+    if (data instanceof Function) {
+        const value = data(el)
+        if (value) return JS_to_HTML(value, el)
+        return
+    }
 
     if (typeof data === 'object') return Object.entries(data).reduce(
         (el, [attr, value]) => {
