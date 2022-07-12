@@ -68,16 +68,8 @@ trkl.computed = fn => {
   function runComputed() {
     detectCircularity(computationToken);
     computedTracker.push(computationToken);
-    var errors, result;
-    try {
-      result = fn(self.value);
-    } catch (e) {
-      errors = e;
-    }
+    const result = fn(self.value);
     computedTracker.pop();
-    if (errors) {
-      throw errors;
-    }
     self(result);
   }
 };

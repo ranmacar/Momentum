@@ -1,7 +1,7 @@
 import $ from '../reactive/trkl'
 import { JS_to_HTML as h } from '../ast/js-html'
 import events from '../ast/js-events'
-import { jss } from '../ast/js-css'
+import { style } from '../ast/js-css'
 
 import layouts from './key-layouts'
 
@@ -55,14 +55,14 @@ export default (modes, mode, held, history) => {
 
     const Modes = [
         'div.modes',
-        jss({
+        style({
             display: 'flex',
             flex: '0 0 2rem',
             width: '100%'
         }),
         ...modes.map((m) => [
             'div#_' + m.name,
-            jss({
+            style({
                 background: '#eeeeee',
                 minWidth: '6rem',
                 flex: 1,
@@ -74,12 +74,12 @@ export default (modes, mode, held, history) => {
         ]),
 
         effect((el, old) => {
-            jss({
+            style({
                 borderColor: 'gray',
                 background: '#eeeeee'
             })(el.querySelector('#_' + old))
 
-            jss({
+            style({
                 borderColor: 'black',
                 background: '#ffdddd'
             })(el.querySelector('#_' + mode().name))
@@ -90,7 +90,7 @@ export default (modes, mode, held, history) => {
 
     return h([
         'div.keyboard',
-        jss({
+        style({
             display: 'flex',
             width: '100%',
             flexDirection: 'column'
@@ -105,13 +105,13 @@ export default (modes, mode, held, history) => {
         Modes,
         [
             'div.rows',
-            jss({
+            style({
                 aspectRatio: 2.7,
                 display: 'flex',
                 flexDirection: 'column'
             }),
             ...rows().map((row) => [
-                'div.row', jss({
+                'div.row', style({
                     display: 'flex',
                     flex: '1 0',
                     minHeight: 0
@@ -119,7 +119,7 @@ export default (modes, mode, held, history) => {
                 ...row.map(key => Array.isArray(key)
                     ? [
                         'div',
-                        jss({
+                        style({
                             display: 'flex',
                             minWidth: 0,
                             flex: `${key[0].span} ${key[0].span}`,
@@ -127,7 +127,7 @@ export default (modes, mode, held, history) => {
                         }),
                         ...key.map(key => [
                             'div',
-                            jss({
+                            style({
                                 flex: '1 1',
                                 minWidth: 0,
                                 minHeight: 0,
@@ -135,21 +135,21 @@ export default (modes, mode, held, history) => {
                             }),
                             [
                                 'div#' + key.key,
-                                jss(buttonStyle(key)),
+                                style(buttonStyle(key)),
                                 key.display || key.key
                             ]
                         ])
                     ]
                     : [
                         'div',
-                        jss({
+                        style({
                             display: 'flex',
                             minWidth: 0,
                             flex: `${key.span} ${key.span}`
                         }),
                         [
                             'div#' + key.key,
-                            jss(buttonStyle(key)),
+                            style(buttonStyle(key)),
                             key.key]
                     ])
             ])
@@ -172,7 +172,7 @@ export default (modes, mode, held, history) => {
         })),
 
         effect((el, old = []) => {
-            old.map(code => jss({
+            old.map(code => style({
                 boxShadow: '2px 2px 5px 3px gray',
                 background: '#eeeeee',
                 transform: 'scale(1)'
@@ -181,7 +181,7 @@ export default (modes, mode, held, history) => {
             return held().map(e => {
                 h([
                     el.querySelector('#' + e.code),
-                    jss({
+                    style({
                         boxShadow: '1px 1px 3px 1px gray',
                         background: '#ddffdd',
                         transform: 'scale(0.9)'
