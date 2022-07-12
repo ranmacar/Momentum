@@ -6,6 +6,7 @@ export default () => {
     bindings: [
       standard, shifted
     ],
-    stack: [1, 0]
+    stack: [1, 0],
+    history: false
   }))
 }

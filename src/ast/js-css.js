@@ -1,5 +1,5 @@
-export const jss = (el, ...styles) => (el instanceof HTMLElement ? [el] : Array.from(document.querySelectorAll(el)))
-  .map(element => Object.assign(element.style, ...styles)).false
+export const jss = (...styles) => (...el) => Array.from(el)
+  .map(element => element && Object.assign(element.style, ...styles)).false
 
 const pathMerge = (o, path, value) => {
   let target = o;

@@ -55,14 +55,14 @@ export default (modes, mode, held, history) => {
 
     const Modes = [
         'div.modes',
-        el => jss(el, {
+        jss({
             display: 'flex',
             flex: '0 0 2rem',
             width: '100%'
         }),
         ...modes.map((m) => [
             'div#_' + m.name,
-            el => jss(el, {
+            jss({
                 background: '#eeeeee',
                 minWidth: '6rem',
                 flex: 1,
@@ -74,38 +74,44 @@ export default (modes, mode, held, history) => {
         ]),
 
         effect((el, old) => {
-            jss(el.querySelector('#_' + old), {
+            jss({
                 borderColor: 'gray',
                 background: '#eeeeee'
-            })
+            })(el.querySelector('#_' + old))
 
-            jss(el.querySelector('#_' + mode().name), {
+            jss({
                 borderColor: 'black',
                 background: '#ffdddd'
-            })
+            })(el.querySelector('#_' + mode().name))
 
             return mode().name
         })
-
     ]
 
     return h([
         'div.keyboard',
-        el => jss(el, {
+        jss({
             display: 'flex',
             width: '100%',
             flexDirection: 'column'
         }),
+        [
+            'div.clock',
+            (el) => {
+                const update = () => el.innerHTML = new Date()
+                setInterval(update, 1000)
+                update()
+            }],
         Modes,
         [
             'div.rows',
-            el => jss(el, {
+            jss({
                 aspectRatio: 2.7,
                 display: 'flex',
                 flexDirection: 'column'
             }),
             ...rows().map((row) => [
-                'div.row', el => jss(el, {
+                'div.row', jss({
                     display: 'flex',
                     flex: '1 0',
                     minHeight: 0
@@ -113,7 +119,7 @@ export default (modes, mode, held, history) => {
                 ...row.map(key => Array.isArray(key)
                     ? [
                         'div',
-                        el => jss(el, {
+                        jss({
                             display: 'flex',
                             minWidth: 0,
                             flex: `${key[0].span} ${key[0].span}`,
@@ -121,7 +127,7 @@ export default (modes, mode, held, history) => {
                         }),
                         ...key.map(key => [
                             'div',
-                            el => jss(el, {
+                            jss({
                                 flex: '1 1',
                                 minWidth: 0,
                                 minHeight: 0,
@@ -129,22 +135,22 @@ export default (modes, mode, held, history) => {
                             }),
                             [
                                 'div#' + key.key,
-                                el => jss(el, buttonStyle(key)),
+                                jss(buttonStyle(key)),
                                 key.display || key.key
                             ]
                         ])
                     ]
                     : [
                         'div',
-                        el => jss(el, {
+                        jss({
                             display: 'flex',
                             minWidth: 0,
                             flex: `${key.span} ${key.span}`
                         }),
                         [
-                            'div#' + key.key, {
-                                style: buttonStyle(key)
-                            }, key.key]
+                            'div#' + key.key,
+                            jss(buttonStyle(key)),
+                            key.key]
                     ])
             ])
         ],
@@ -166,18 +172,20 @@ export default (modes, mode, held, history) => {
         })),
 
         effect((el, old = []) => {
-            old.map(code => jss(el.querySelector('#' + code), {
+            old.map(code => jss({
                 boxShadow: '2px 2px 5px 3px gray',
                 background: '#eeeeee',
                 transform: 'scale(1)'
-            }))
+            })(el.querySelector('#' + code)))
 
             return held().map(e => {
-                jss(el.querySelector('#' + e.code), {
-                    boxShadow: '1px 1px 3px 1px gray',
-                    background: '#ddffdd',
-                    transform: 'scale(0.9)'
-                })
+                h([
+                    el.querySelector('#' + e.code),
+                    jss({
+                        boxShadow: '1px 1px 3px 1px gray',
+                        background: '#ddffdd',
+                        transform: 'scale(0.9)'
+                    })])
                 return e.code
             })
         }),

@@ -1,5 +1,5 @@
 // html <-> js
-const not_empty = (o) => o && (!!o.length || !!Object.keys(o).length);
+const not_empty = (o) => o && (!!o.length || !!Object.keys(o).length || o instanceof Function);
 
 const html = document.createElement.bind(document);
 const text = document.createTextNode.bind(document);
@@ -38,7 +38,7 @@ export const HTML_to_JS = (el) => el.nodeType === Node.TEXT_NODE
     ].map(extractShorthands).filter(not_empty)
 
 export const parseTagShorthands = (s) => {
-    const [namespace, tag] = s.match(/^(\w+:)?(\w+)/)?.slice?.(1) || ['html:', 'div']
+    const [namespace, tag] = s.match(/^(\w+:)?(\w+)/)?.slice?.(1) || [null, 'div']
 
     const attrs = [...s.matchAll(/[\.#]\w+/g)].reduce((o, [attr]) => attr.startsWith('.')
         ? {
@@ -54,15 +54,22 @@ export const parseTagShorthands = (s) => {
 }
 
 export const JS_to_HTML = (data, el) => {
+    // console.log(data, el)
     if (!not_empty(data)) return
 
+    if (data instanceof HTMLElement) return data
+
     if (typeof data === 'string') return text(data)
+
     if (typeof data === 'number') return text(data)
 
     if (Array.isArray(data)) {
-        const [namespace, tag, attrs] = parseTagShorthands(data.shift())
+        let element = data.shift()
 
-        if (not_empty(attrs)) data.unshift(attrs)
+        if (!(element instanceof HTMLElement)) {
+            const [namespace, tag, attrs] = parseTagShorthands(element)
+            element = JS_to_HTML([namespaces[namespace](tag), attrs])
+        }
 
         return data.reduce((el, data) => {
             try {
@@ -73,7 +80,7 @@ export const JS_to_HTML = (data, el) => {
             } finally {
                 return el
             }
-        }, namespaces[namespace](tag))
+        }, element)
     }
 
     if (data instanceof Function) {
