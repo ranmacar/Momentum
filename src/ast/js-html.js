@@ -66,9 +66,14 @@ export const JS_to_HTML = (data, el) => {
     if (Array.isArray(data)) {
         let element = data.shift()
 
-        if (!(element instanceof HTMLElement)) {
+        if (element instanceof Function) {
+            element = element(el)
+        }
+
+        if (typeof element === 'string') {
             const [namespace, tag, attrs] = parseTagShorthands(element)
             element = JS_to_HTML([namespaces[namespace](tag), attrs])
+            element.parent = el
         }
 
         return data.reduce((el, data) => {

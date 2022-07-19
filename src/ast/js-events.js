@@ -9,7 +9,7 @@ export default (eventPrefix = "on:", proxy = true, error = console.error) => {
                     try {
                         return eventHandler(event)
                     } catch (e) {
-                        error(e, name, event, dom)
+                        error(e, name, event, event.caller)
                     }
                 }).some(x => !!x)) return
             event.caller = event.caller.parentNode
@@ -33,7 +33,7 @@ export default (eventPrefix = "on:", proxy = true, error = console.error) => {
 
     function svgParent(element) {
         while (element && element.nodeName !== 'svg') {
-            element = element.parentNode
+            element = element.parent
         }
         return element
     }
@@ -43,7 +43,7 @@ export default (eventPrefix = "on:", proxy = true, error = console.error) => {
             svgCoords: svgCoords(svg, e.clientX, e.clientY, e.caller)
         })
             : e,
-            ...args)
+            getState(e.caller), ...args)
 
         handler.__name = fn.name
         return handler
@@ -60,7 +60,7 @@ export default (eventPrefix = "on:", proxy = true, error = console.error) => {
         return element => {
             element[name] = [...(element[name] || []), addArgs(fn, args, svgParent(element))]
             return {
-                [name]: element[name].map(fn => fn.__name).join(' | ')
+                [name]: element[name].map(fn => fn.__name || 'anonymous').join(' | ')
             }
         }
     }
@@ -71,10 +71,40 @@ export default (eventPrefix = "on:", proxy = true, error = console.error) => {
             element[name] = element[name]?.filter?.(handler => !!fn && fn !== handler)
             if (!element[name].length) {
                 delete element[name]
+                element.removeAttribute(name)
             } else return {
                 [name]: element[name].map(fn => fn.name).join(' | ')
             }
         }
+    }
+
+    function dispatch(name, el, ...args) {
+        (el || document.body)
+            .dispatchEvent(new CustomEvent(name, {
+                bubbles: true,
+                detail: args
+            }))
+    }
+
+
+    function getState(el) {
+        let state = el.state || null
+        let parent = el;
+
+        while (!state && parent) {
+            parent = parent.parent
+            state = parent?.state || null
+        }
+
+        el.state = el.state || Object.create(state)
+
+        return el.state
+    }
+
+    function state(prop, value) {
+        return el => value === undefined
+            ? getState(el)[prop]?.()
+            : Object.assign(getState(el), { [prop]: value })?.undefined
     }
 
     if (proxy) return {
@@ -87,10 +117,25 @@ export default (eventPrefix = "on:", proxy = true, error = console.error) => {
             get(target, prop) {
                 return (fn) => off(prop, fn)
             }
-        })
+        }),
+        dispatch: new Proxy(knownEvents, {
+            get(target, prop) {
+                return (...args) => dispatch(prop, ...args)
+            }
+        }),
+        state: new Proxy({}, {
+            get(target, prop) {
+                return value => el => state(prop, value)(el)
+            }
+        }),
+        getState
     }
+
     else return {
         on,
-        off
+        off,
+        dispatch,
+        state,
+        getState
     };
 }

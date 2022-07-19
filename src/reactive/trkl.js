@@ -30,12 +30,15 @@ export default function trkl(value) {
   };
 
   function write(newValue, comp) {
+    // console.log('WRITING: ', self.value, newValue, comp)
     if (newValue === self.value && (
       value === null ||
       typeof self.value !== 'object' ||
       comp && comp(newValue, self.value))) {
       return;
     }
+
+    // console.log('WROTE: ', self.value, newValue)
 
     var oldValue = self.value;
     self.value = newValue;
@@ -49,29 +52,43 @@ export default function trkl(value) {
   function read() {
     var runningComputation = computedTracker[computedTracker.length - 1];
     if (runningComputation) {
-      subscribe(runningComputation[0]);
+      subscribe(runningComputation);
     }
+    // console.log('READ: ', self.value, runningComputation?.fn)
     return self.value;
   }
 
   return self;
 }
 
+trkl.circular = new Set()
 trkl.computed = fn => {
   var self = trkl();
-  var computationToken = [runComputed]
+
+  function runComputed() {
+    if (computedTracker.indexOf(runComputed) > -1) {
+      trkl.circular.add(runComputed)
+      return
+    }
+
+    let result
+    computedTracker.push(runComputed);
+
+    try {
+      result = fn(self.value);
+    } catch (e) {
+      console.log(e, self)
+      result = null
+    } finally {
+      computedTracker.pop();
+      self(result);
+    }
+  }
 
   runComputed.fn = fn
   runComputed();
-  return self;
 
-  function runComputed() {
-    detectCircularity(computationToken);
-    computedTracker.push(computationToken);
-    const result = fn(self.value);
-    computedTracker.pop();
-    self(result);
-  }
+  return self;
 };
 
 trkl.from = executor => {
@@ -79,12 +96,6 @@ trkl.from = executor => {
   executor(self);
   return self;
 };
-
-function detectCircularity(token) {
-  if (computedTracker.indexOf(token) > -1) {
-    throw Error('Circular computation');
-  }
-}
 
 function remove(array, item) {
   var position = array.indexOf(item);

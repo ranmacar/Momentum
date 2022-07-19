@@ -7,7 +7,7 @@ import layouts from './key-layouts'
 
 const falsy = thing => !!thing
 
-const { on } = events()
+const { on, state, dispatch } = events()
 
 const effect = (fn) => (el) => {
     $.computed((old) => fn(el, old))
@@ -90,6 +90,16 @@ export default (modes, mode, held, history) => {
 
     return h([
         'div.keyboard',
+        state.input($('placeholder')),
+        ['input',
+            { value: state.input() },
+            state.input(),
+            on.input((e, state) => {
+                state.input(e.target.value)
+            })],
+
+        on.test0((...args) => console.log(args, args[0].detail), 'custom?'),
+
         style({
             display: 'flex',
             width: '100%',
@@ -105,6 +115,13 @@ export default (modes, mode, held, history) => {
         Modes,
         [
             'div.rows',
+
+            ['div', effect((el) => {
+                el.innerHTML = state.input()(el)
+            })],
+
+            on.click((e) => dispatch.test0(e.caller, 'test?!')),
+
             style({
                 aspectRatio: 2.7,
                 display: 'flex',

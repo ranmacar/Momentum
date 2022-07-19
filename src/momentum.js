@@ -7,6 +7,6 @@ export default () => {
       standard, shifted
     ],
     stack: [1, 0],
-    history: false
+    history: true
   }))
 }

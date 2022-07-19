@@ -5,18 +5,21 @@ export const standard = {
         const key = code.match(/Key(\w)/)?.[1]?.toLowerCase?.()
         if (key) return {
             display: key,
+            default: true,
             tap: () => console.log(key)
         }
 
         const digit = code.match(/Digit(\d)/)?.[1]
         if (digit !== undefined) return {
             display: digit,
+            default: true,
             tap: () => console.log(digit)
         }
 
         const fn = code.match(/F(\d+)/)?.[1]
         if (fn) return {
             display: code,
+            default: true,
             tap: () => console.log(code)
         }
 
@@ -26,7 +29,7 @@ export const standard = {
             tap: () => console.log(modifier, position)
         }
 
-        return {
+        const mapping = {
             Escape: {
                 display: 'Esc',
                 tap: () => console.log('Escape')
@@ -132,6 +135,11 @@ export const standard = {
             }
         }[code]
 
+        if (mapping) return {
+            ...mapping,
+            default: true
+        };
+
     },
     toggle: {
         Escape: 0,
@@ -147,10 +155,11 @@ export const shifted = {
         const key = code.match(/Key(\w)/)?.[1]
         if (key) return {
             display: key,
+            default: true,
             tap: () => console.log(key)
         }
 
-        return {
+        const mapping = {
             Digit1: {
                 display: '!',
                 tap: () => console.log('!')
@@ -257,6 +266,10 @@ export const shifted = {
             }
         }[code]
 
+        if (mapping) return {
+            ...mapping,
+            default: true
+        }
     },
     toggle: {
         Escape: 0,

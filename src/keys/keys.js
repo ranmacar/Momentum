@@ -30,6 +30,7 @@ export default ({
             default(code, mode) {
                 return {
                     display: ['div', code],
+                    default: true,
                     tap: (e) => console.log('tap', code, mode.name),
                     double: (e) => console.log('double', code, mode.name),
                     held: (e, duration, released) => console.log('held', code, mode.name, duration, !!released),
@@ -78,6 +79,8 @@ export default ({
         const event = held().find(codeMatch(e.code))
         const mappings = mode()?.[e.code]
 
+        if (!mappings?.default) e.preventDefault()
+
         if (event) {
             const duration = e.timeStamp - event.timeStamp;
             mappings?.held?.(event, duration, true)
@@ -91,7 +94,6 @@ export default ({
             }
         }
 
-        e.preventDefault()
     }
 
     let last = false
