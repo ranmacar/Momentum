@@ -3,7 +3,6 @@ import overlay from './key-overlay'
 
 export default ({
     tap = 200,
-    sticky = 2000,
     bindings = [],
     stack = [0],
     display = true,
@@ -42,7 +41,7 @@ export default ({
 
     const codeMatch = (code) => (held) => held.code === code
 
-    const modeStack = $(stack)
+    const modeStack = $([...stack])
 
     const setMode = mode => modeStack([modes[mode], ...modeStack()])
 
@@ -59,8 +58,8 @@ export default ({
             for (const [key, index] of toggles) {
                 const event = held.find(codeMatch(key))
                 if (event) {
-                    stack.unshift(index)
-                    event.toggle = stack[0]
+                    stack.unshift(index) // mutating without triggering circular 
+                    event.toggle = index
                 }
             }
         }
@@ -68,12 +67,7 @@ export default ({
         return modes[stack[0]]
     }
 
-    const mode = $.computed(() => {
-        const selected = selectMode(modeStack(), held())
-        // console.debug(selected, modeStack())
-        return selected
-    })
-
+    const mode = $.computed((old) => selectMode(modeStack(), held()))
 
     const down = (e) => {
         const event = held().find(codeMatch(e.code))
@@ -93,7 +87,6 @@ export default ({
                 events([e, ...events()])
             }
         }
-
     }
 
     let last = false
@@ -173,6 +166,7 @@ export default ({
 
     const reset = () => {
         held([])
+        modeStack([...stack])
         last = false
     }
 

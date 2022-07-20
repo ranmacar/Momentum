@@ -43,7 +43,7 @@ export default (eventPrefix = "on:", proxy = true, error = console.error) => {
             svgCoords: svgCoords(svg, e.clientX, e.clientY, e.caller)
         })
             : e,
-            getState(e.caller), ...args)
+            state(e.caller), ...args)
 
         handler.__name = fn.name
         return handler
@@ -87,7 +87,7 @@ export default (eventPrefix = "on:", proxy = true, error = console.error) => {
     }
 
 
-    function getState(el) {
+    function state(el) {
         let state = el.state || null
         let parent = el;
 
@@ -99,12 +99,6 @@ export default (eventPrefix = "on:", proxy = true, error = console.error) => {
         el.state = el.state || Object.create(state)
 
         return el.state
-    }
-
-    function state(prop, value) {
-        return el => value === undefined
-            ? getState(el)[prop]?.()
-            : Object.assign(getState(el), { [prop]: value })?.undefined
     }
 
     if (proxy) return {
@@ -123,19 +117,13 @@ export default (eventPrefix = "on:", proxy = true, error = console.error) => {
                 return (...args) => dispatch(prop, ...args)
             }
         }),
-        state: new Proxy({}, {
-            get(target, prop) {
-                return value => el => state(prop, value)(el)
-            }
-        }),
-        getState
+        state
     }
 
     else return {
         on,
         off,
         dispatch,
-        state,
-        getState
+        state
     };
 }

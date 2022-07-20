@@ -13,6 +13,18 @@ const effect = (fn) => (el) => {
     $.computed((old) => fn(el, old))
 }
 
+const flexRow = {
+    display: 'flex',
+    flexDirection: 'row',
+    minWidth: 0,
+}
+
+const flexColumn = {
+    display: 'flex',
+    flexDirection: 'column',
+    minHeight: 0
+}
+
 export default (modes, mode, held, history) => {
     const layout = $(localStorage.getItem('keys__layout') || layouts.yoga530)
 
@@ -39,15 +51,12 @@ export default (modes, mode, held, history) => {
         fontWeight: 700,
         fontSize: '1.2rem',
         margin: '3px',
-        minWidth: 0,
-        textAlign: 'center',
-        display: 'flex',
         flex: '1 1',
         justifyContent: 'center',
         alignItems: 'center',
         borderRadius: '5px',
         transition: 'all 0.3s',
-    }, key.key ? {
+    }, flexRow, key.key ? {
         background: '#eeeeee',
         boxShadow: '2px 2px 5px 3px gray',
         border: '2px solid gray'
@@ -55,8 +64,7 @@ export default (modes, mode, held, history) => {
 
     const Modes = [
         'div.modes',
-        style({
-            display: 'flex',
+        style(flexRow, {
             flex: '0 0 2rem',
             width: '100%'
         }),
@@ -90,21 +98,20 @@ export default (modes, mode, held, history) => {
 
     return h([
         'div.keyboard',
-        state.input($('placeholder')),
+
+        (el) => { state(el).input = $('placeholder') },
         ['input',
-            { value: state.input() },
-            state.input(),
+            { value: (el) => state(el).input() },
             on.input((e, state) => {
                 state.input(e.target.value)
             })],
+        ['div', effect((el) => {
+            el.innerHTML = state(el).input()
+        })],
 
         on.test0((...args) => console.log(args, args[0].detail), 'custom?'),
 
-        style({
-            display: 'flex',
-            width: '100%',
-            flexDirection: 'column'
-        }),
+        style(flexColumn),
         [
             'div.clock',
             (el) => {
@@ -116,39 +123,28 @@ export default (modes, mode, held, history) => {
         [
             'div.rows',
 
-            ['div', effect((el) => {
-                el.innerHTML = state.input()(el)
-            })],
 
             on.click((e) => dispatch.test0(e.caller, 'test?!')),
 
-            style({
-                aspectRatio: 2.7,
-                display: 'flex',
-                flexDirection: 'column'
+            style(flexColumn, {
+                aspectRatio: 2.7
             }),
             ...rows().map((row) => [
-                'div.row', style({
-                    display: 'flex',
+                'div.row', style(flexRow, {
+                    minHeight: 0,
                     flex: '1 0',
-                    minHeight: 0
                 }),
                 ...row.map(key => Array.isArray(key)
                     ? [
                         'div',
-                        style({
-                            display: 'flex',
-                            minWidth: 0,
+                        style(flexColumn, {
                             flex: `${key[0].span} ${key[0].span}`,
-                            flexDirection: 'column'
                         }),
                         ...key.map(key => [
                             'div',
-                            style({
+                            style(flexRow, {
                                 flex: '1 1',
-                                minWidth: 0,
                                 minHeight: 0,
-                                display: 'flex'
                             }),
                             [
                                 'div#' + key.key,
@@ -159,9 +155,7 @@ export default (modes, mode, held, history) => {
                     ]
                     : [
                         'div',
-                        style({
-                            display: 'flex',
-                            minWidth: 0,
+                        style(flexRow, {
                             flex: `${key.span} ${key.span}`
                         }),
                         [
@@ -209,7 +203,6 @@ export default (modes, mode, held, history) => {
 
         history && [
             'div#history',
-            on.click(console.log, 'logging!'),
             effect(el => {
                 el.replaceChildren(...history().map(
                     event => h(['div', [event.TYPE, event.code, event.duration || ''].join(' ')])))

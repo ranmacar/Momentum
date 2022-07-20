@@ -2,31 +2,27 @@ var computedTracker = []
 
 let index = 0
 export default function trkl(value) {
-  var subscribers = []
-
   var self = function (...args) {
     return args.length
       ? write(args[0])
       : read()
   };
 
-  self.index = index++;
-  self.value = value;
-  self.subs = subscribers; // expose for runtime goodness :)
+  self.index = index++
+  self.value = value
+  self.subs = []
 
-  var subscribe = (subscriber, immediate) => {
-    if (!~subscribers.indexOf(subscriber)) {
-      subscribers.push(subscriber);
+  self.sub = (subscriber, immediate) => {
+    if (!~self.subs.indexOf(subscriber)) {
+      self.subs.push(subscriber)
     }
     if (immediate) {
-      subscriber(self.value);
+      subscriber(self.value)
     }
   }
 
-  self.sub = subscribe;
-
   self.unsub = subscriber => {
-    remove(subscribers, subscriber);
+    remove(self.subs, subscriber)
   };
 
   function write(newValue, comp) {
@@ -35,71 +31,71 @@ export default function trkl(value) {
       value === null ||
       typeof self.value !== 'object' ||
       comp && comp(newValue, self.value))) {
-      return;
+      return
     }
 
     // console.log('WROTE: ', self.value, newValue)
 
-    var oldValue = self.value;
-    self.value = newValue;
+    var oldValue = self.value
+    self.value = newValue
 
-    for (let i = subscribers.length - 1; i > -1; i--) {
+    for (let i = self.subs.length - 1; i > -1; i--) {
       // Errors will just terminate the effects
-      subscribers[i](self.value, oldValue);
+      self.subs[i](self.value, oldValue)
     }
   }
 
   function read() {
-    var runningComputation = computedTracker[computedTracker.length - 1];
+    var runningComputation = computedTracker[computedTracker.length - 1]
     if (runningComputation) {
-      subscribe(runningComputation);
+      self.sub(runningComputation)
     }
     // console.log('READ: ', self.value, runningComputation?.fn)
-    return self.value;
+    return self.value
   }
 
-  return self;
+  return self
 }
 
 trkl.circular = new Set()
 trkl.computed = fn => {
-  var self = trkl();
-
-  function runComputed() {
-    if (computedTracker.indexOf(runComputed) > -1) {
-      trkl.circular.add(runComputed)
+  var self = trkl()
+  self.computed = () => {
+    if (computedTracker.indexOf(self.computed) > -1) {
+      trkl.circular.add(self)
+      debugger
       return
     }
 
     let result
-    computedTracker.push(runComputed);
+    computedTracker.push(self.computed)
 
     try {
-      result = fn(self.value);
+      result = fn(self.value)
     } catch (e) {
       console.log(e, self)
       result = null
     } finally {
-      computedTracker.pop();
-      self(result);
+      computedTracker.pop()
+      self(result)
     }
   }
 
-  runComputed.fn = fn
-  runComputed();
+  self.computed.self = self
+  self.computed()
 
-  return self;
+  return self
 };
 
 trkl.from = executor => {
-  var self = trkl();
-  executor(self);
-  return self;
+  var self = trkl()
+  executor(self)
+  return self
 };
 
 function remove(array, item) {
-  var position = array.indexOf(item);
+  var position = array.indexOf(item)
   if (position > -1) {
-    array.splice(position, 1);
+    array.splice(position, 1)
   }
 }
